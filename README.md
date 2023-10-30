@@ -1,12 +1,29 @@
+user
+sudo chown -R $(id -u):$(id -g) $HOME/.docker
 
 ## Dockerfile
 ```
+ARG BASE_IMAGE_NAME=debian:bullseye-slim
+# Intermediate build container
+FROM $BASE_IMAGE_NAME AS builder
+
+LABEL maintainer="boyquotes <boyquotes@proton.me>"
+LABEL name="nvm-dev-env"
+LABEL version="latest"
+
+ENV NVM_DIR /usr/local/nvm
+ENV NODE_VERSION 4.2.4
+ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
+ENV PATH      $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
 FROM python:latest
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY . /app
 WORKDIR /app
 
 SHELL ["/bin/bash", "-c"]
+# Set the SHELL to bash with pipefail option
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN /bin/bash -c "source /usr/local/bin/virtualenvwrapper.sh \
     && mkvirtualenv myapp \
     && workon myapp \
@@ -14,21 +31,109 @@ RUN /bin/bash -c "source /usr/local/bin/virtualenvwrapper.sh \
 RUN ["/bin/bash", "-c", "source /usr/local/bin/virtualenvwrapper.sh"]
 
 RUN pip3 install -r requirements.txt
+# Set locale
+RUN locale-gen en_US.UTF-8
+
+## https://github.com/nvm-sh/nvm/blob/master/Dockerfile
+# Add user "nvm" as non-root user
+RUN useradd -ms /bin/bash nvm
+# Copy and set permission for nvm directory
+COPY . /home/nvm/.nvm/
+RUN chown nvm:nvm -R "/home/nvm/.nvm"
+# Set sudoer for "nvm"
+RUN echo 'nvm ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+# Switch to user "nvm" from now
+USER nvm
+# nvm
+RUN echo 'export NVM_DIR="$HOME/.nvm"'                                       >> "$HOME/.bashrc"
+RUN echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm' >> "$HOME/.bashrc"
+RUN echo '[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion" # This loads nvm bash_completion' >> "$HOME/.bashrc"
+# nodejs and tools
+RUN bash -c 'source $HOME/.nvm/nvm.sh   && \
+    nvm install node                    && \
+    npm install -g doctoc urchin eclint dockerfile_lint && \
+    npm install --prefix "$HOME/.nvm/"'
+
+# Set WORKDIR to nvm directory
+WORKDIR /home/nvm/.nvm
+
+EXPOSE 3000
+
+ENTRYPOINT ["/bin/bash"]
+
+# Add 3.7 to the available alternatives
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
+# Set python3.7 as the default python
+RUN update-alternatives --set python /usr/bin/python3.7
 
 ENTRYPOINT [ "python3" ]
 ENTRYPOINT ["bash", "--rcfile", "/usr/local/bin/virtualenvwrapper.sh", "-ci"]
 
 CMD [ "app.py" ]
 CMD [ "python", "run.py"]
-```
 
+# Prevent dialog during apt install
+ENV DEBIAN_FRONTEND noninteractive
+## Install build dependencies
+RUN set -e && \
+	apt-get update && apt-get install --assume-yes --no-install-recommends \
+		ca-certificates \
+		dirmngr \
+		dpkg-dev \
+		gcc \
+		gnupg \
+		libbz2-dev \
+		libc6-dev \
+		libexpat1-dev \
+		libffi-dev \
+		liblzma-dev \
+		libsqlite3-dev \
+		libssl-dev \
+		make \
+		netbase \
+		uuid-dev \
+		wget \
+		xz-utils \
+		zlib1g-dev
+
+# Install apt packages
+RUN apt update         && \
+    apt upgrade -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"  && \
+    apt install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold"     \
+        coreutils             \
+        util-linux            \
+        bsdutils              \
+        file                  \
+        openssl               \
+        libssl-dev            \
+        locales               \
+        ca-certificates       \
+        ssh                   \
+        wget                  \
+        patch                 \
+        sudo                  \
+        htop                  \
+        dstat                 \
+        vim                   \
+        tmux                  \
+        curl                  \
+        git                   \
+        jq                    \
+        zsh                   \
+        ksh                   \
+        gcc                   \
+        g++                   \
+        xz-utils              \
+        build-essential       \
+        bash-completion       && \
+    apt-get clean
 
 
 ## FROM
 FROM python:3  
 FROM python:<version>-slim  
 FROM python:<version>-alpine  
-```
+
 FROM python:3.7.5-slim
 RUN python -m pip install \
         parse \
@@ -70,6 +175,77 @@ RUN g++ -o /binary source.cpp
 FROM builder AS build2
 COPY source2.cpp source.cpp
 RUN g++ -o /binary source.cpp
+---
+```
+# syntax=docker/dockerfile:1
+FROM golang:1.21 as build
+WORKDIR /src
+COPY <<EOF /src/main.go
+package main
+
+import "fmt"
+
+func main() {
+  fmt.Println("hello, world")
+}
+EOF
+RUN go build -o /bin/hello ./main.go
+
+FROM scratch
+COPY --from=build /bin/hello /bin/hello
+CMD ["/bin/hello"]
+```
+
+```
+# syntax=docker/dockerfile:1
+
+FROM alpine:latest AS builder
+RUN apk --no-cache add build-base
+
+FROM builder AS build1
+COPY source1.cpp source.cpp
+RUN g++ -o /binary source.cpp
+
+FROM builder AS build2
+COPY source2.cpp source.cpp
+RUN g++ -o /binary source.cpp
+```
+
+```
+FROM alpine as s1
+RUN sleep 10 && echo "s1 done"
+
+FROM alpine as s2
+RUN sleep 10 && echo "s2 done"
+
+FROM alpine as s3
+RUN sleep 10 && echo "s3 done"
+Sequential: docker build . will take around 30 seconds.
+
+Parallel: DOCKER_BUILDKIT=1  docker build . will take around 10 seconds.
+```
+
+```
+apk add nodejs npm
+apk add nodejs-current
+```
+```
+docker build --build-arg some_variable_name=a_value
+docker run -e "env_var_name=another_value" alpine env
+
+env file
+env_var_name=another_value
+env_var_name2=yet_another_value
+
+ docker run --env-file=BOB alpine env
+```
 
 ## PYTHON
+API :  
+https://github.com/docker/docker-py
+
+https://github.com/docker-training/webapp  
+https://github.com/codefresh-contrib/python-flask-sample-app  
+
 `docker run -it --rm quay.io/python-devs/ci-image:master`
+
