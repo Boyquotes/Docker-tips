@@ -58,6 +58,7 @@ RUN bash -c 'source $HOME/.nvm/nvm.sh   && \
 WORKDIR /home/nvm/.nvm
 
 EXPOSE 3000
+EXPOSE 8080:8080
 
 ENTRYPOINT ["/bin/bash"]
 
@@ -71,6 +72,7 @@ ENTRYPOINT ["bash", "--rcfile", "/usr/local/bin/virtualenvwrapper.sh", "-ci"]
 
 CMD [ "app.py" ]
 CMD [ "python", "run.py"]
+CMD ["tail", "-f", "/dev/null"]
 
 # Prevent dialog during apt install
 ENV DEBIAN_FRONTEND noninteractive
@@ -238,6 +240,8 @@ env_var_name=another_value
 env_var_name2=yet_another_value
 
  docker run --env-file=BOB alpine env
+ docker run -it -p 8080:8080 rotki_linux bash
+ docker exec -it reverent_murdock bash
 ```
 
 ## PYTHON
