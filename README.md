@@ -242,6 +242,15 @@ env_var_name2=yet_another_value
  docker run --env-file=BOB alpine env
  docker run -it -p 8080:8080 rotki_linux bash
  docker exec -it reverent_murdock bash
+
+ docker create --name `container name` --expose 7000 --expose 7001 `image name`
+ docker run -it -p 8888-8898:8888-8898
+ EXPOSE 8000-8009
+The above command tells that the application needs to open 10 ports starting from 8000 to 8009 for communication
+In short, running docker run --network host ... will expose all the container ports.
+With docker 1.3, there is a new command docker exec. This allows you to enter a running container:
+
+docker exec -it [container-id] bash
 ```
 
 ## PYTHON
