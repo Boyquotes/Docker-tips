@@ -251,6 +251,8 @@ In short, running docker run --network host ... will expose all the container po
 With docker 1.3, there is a new command docker exec. This allows you to enter a running container:
 
 docker exec -it [container-id] bash
+
+docker run --name python311 -it --entrypoint /bin/bash python311
 ```
 
 ## PYTHON
