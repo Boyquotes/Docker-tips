@@ -279,11 +279,19 @@ tar -tvf dump.tar
 
 docker run --privileged --name dind_docker -d docker:dind
 docker exec -it dind_docker /bin/sh
-cd symfony docker
+apk add git curl
+git clone https://github.com/dunglas/symfony-docker.git
+cd symfony-docker
+docker compose build --no-cache
 HTTP_PORT=8000 HTTPS_PORT=4443 HTTP3_PORT=4443 docker compose up -d --wait
+
+docker run -i --privileged -p 2376:2376 -p 4443:4443 -p 8000:8000 -t sf6 /bin/sh
 
 docker container cp <container id>:/etc/nginx/conf.d/default.conf ./
 
+
+docker inspect dind_docker2 | grep IPAddress
+iptables -t nat -A  DOCKER -p tcp --dport 4443 -j DNAT --to-destination 172.17.0.2:4443
 ====
 
 CLEAN
