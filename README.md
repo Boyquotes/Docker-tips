@@ -16,6 +16,10 @@ ENV NODE_VERSION 4.2.4
 ENV NODE_PATH $NVM_DIR/v$NODE_VERSION/lib/node_modules
 ENV PATH      $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
+COPY --from=composer_upstream --link /composer /usr/bin/composer
+
+
+=====
 FROM python:latest
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 COPY . /app
@@ -61,7 +65,7 @@ EXPOSE 3000
 EXPOSE 8080:8080
 
 ENTRYPOINT ["/bin/bash"]
-
+====
 # Add 3.7 to the available alternatives
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 1
 # Set python3.7 as the default python
@@ -253,7 +257,63 @@ With docker 1.3, there is a new command docker exec. This allows you to enter a 
 docker exec -it [container-id] bash
 
 docker run --name python311 -it --entrypoint /bin/bash python311
+docker build -t rotki-linux . && docker run -d --name rot -p 8080:8080 -p 4242:4242 -it rotki-linux  && docker logs -f rot
+docker stop rot && docker rm rot
+
+ADD "https://api.github.com/repos/boyquotes/rotki/commits?per_page=1" sha
+
+HEALTHCHECK --start-period=60s CMD curl -f http://localhost:2019/metrics || exit 1
+
+SYMFONY_VERSION=6.1.* docker compose up -d --wait
+STABILITY=dev docker compose up -d --wait
+
+Commit the stopped container to a new image: test_image.
+docker commit $CONTAINER_ID test_image
+Run the new image in a new container with a shell.
+docker run -ti --entrypoint=sh test_image
+Run the list file command in the new container.
+docker exec --privileged $NEW_CONTAINER_ID ls -1 /var/log
+
+docker export -o dump.tar <container id>
+tar -tvf dump.tar
+
+docker run --privileged --name dind_docker -d docker:dind
+docker exec -it dind_docker /bin/sh
+cd symfony docker
+HTTP_PORT=8000 HTTPS_PORT=4443 HTTP3_PORT=4443 docker compose up -d --wait
+
+docker container cp <container id>:/etc/nginx/conf.d/default.conf ./
+
+====
+
+CLEAN
+
+docker rm -f $(docker ps -a -q)
+Delete all containers using the following command:
+docker rm -f $(docker ps -a -q)
+Delete all volumes using the following command:
+docker volume rm $(docker volume ls -q)
+docker system df -v
+
+Just run these three. No need to remove RUNNING containers.
+
+Cleanup exited processes:
+
+docker rm $(docker ps -q -f status=exited)
+Cleanup dangling volumes:
+
+docker volume rm $(docker volume ls -qf dangling=true)
+Cleanup dangling images:
+
+docker rmi $(docker images --filter "dangling=true" -q --no-trunc)
+docker system prune -a -f --volumes
+    -a == removes all unused images
+    -f == force
+    --volumes == prune volumes.
+
 ```
+
+
 
 ## PYTHON
 API :  
