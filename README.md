@@ -229,7 +229,18 @@ RUN sleep 10 && echo "s3 done"
 Sequential: docker build . will take around 30 seconds.
 
 Parallel: DOCKER_BUILDKIT=1  docker build . will take around 10 seconds.
+
+
+nano db_password.txt
+PMA_PASSWORD='admin'
+MYSQL_ROOT_PASSWORD='admin'
+MYSQL_PASSWORD='admin'
+docker run --name myadmin -d -e PMA_PASSWORD_FILE=db_password.txt -p 8080:80 phpmyadmin
+
 ```
+
+
+
 
 ```
 apk add nodejs npm
@@ -258,6 +269,8 @@ docker exec -it [container-id] bash
 
 docker run --name python311 -it --entrypoint /bin/bash python311
 docker build -t rotki-linux . && docker run -d --name rot -p 8080:8080 -p 4242:4242 -it rotki-linux  && docker logs -f rot
+docker run -d --name rot -p 8080:8080 -p 4242:4242 -it rotki-linux
+docker logs -f rot
 docker stop rot && docker rm rot
 
 ADD "https://api.github.com/repos/boyquotes/rotki/commits?per_page=1" sha
@@ -277,24 +290,34 @@ docker exec --privileged $NEW_CONTAINER_ID ls -1 /var/log
 docker export -o dump.tar <container id>
 tar -tvf dump.tar
 
-docker run --privileged --name dind_docker -d docker:dind
+DinD
+docker run --privileged -p 2376:2376 -p 4443:443 -p 8000:80 --name dind_docker2 -d docker:dind
+# docker run --privileged -p 2376:2376 -p 4443:4443 -p 8000:8000 --name dind_docker -d docker:dind
 docker exec -it dind_docker /bin/sh
-apk add git curl
+apk add git curl make nano
 git clone https://github.com/dunglas/symfony-docker.git
 cd symfony-docker
 docker compose build --no-cache
 HTTP_PORT=8000 HTTPS_PORT=4443 HTTP3_PORT=4443 docker compose up -d --wait
 
-docker run -i --privileged -p 2376:2376 -p 4443:4443 -p 8000:8000 -t sf6 /bin/sh
+docker run -d --privileged -p 2376:2376 -p 4443:4443 -p 8000:8000 sf6 /bin/sh
 
 docker container cp <container id>:/etc/nginx/conf.d/default.conf ./
 
 
 docker inspect dind_docker2 | grep IPAddress
 iptables -t nat -A  DOCKER -p tcp --dport 4443 -j DNAT --to-destination 172.17.0.2:4443
+iptables -t nat -A  DOCKER -p tcp --dport 8000 -j DNAT --to-destination 172.17.0.2:8000
+
+docker compose up --pull always|never|policy -d --wait
+
+PHP
+docker compose exec -it php sh
 ====
 
 CLEAN
+
+docker ps -aq | xargs docker stop | xargs docker rm
 
 docker rm -f $(docker ps -a -q)
 Delete all containers using the following command:
@@ -318,6 +341,11 @@ docker system prune -a -f --volumes
     -a == removes all unused images
     -f == force
     --volumes == prune volumes.
+docker system prune -f --volumes
+
+
+## VOLUMES
+docker volume ls
 
 ```
 
@@ -331,4 +359,8 @@ https://github.com/docker-training/webapp
 https://github.com/codefresh-contrib/python-flask-sample-app  
 
 `docker run -it --rm quay.io/python-devs/ci-image:master`
+
+
+## PHP
+composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
 
