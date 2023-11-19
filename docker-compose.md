@@ -40,7 +40,7 @@ services:
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
 
   theia:
-    image: elswork/theia
+    image: theia-blueprint
     restart: always
     ports:
       - 3060:3000
