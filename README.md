@@ -344,6 +344,11 @@ docker system prune -a -f --volumes
 docker system prune -f --volumes
 
 
+## THEIA
+git clone https://github.com/eclipse-theia/theia-blueprint.git
+docker build -t theia-blueprint -f browser.Dockerfile .
+docker run -it -d --init -p 3010:3000 -v "$(pwd):/home/project:cached" theia-blueprint
+
 ## VOLUMES
 docker volume ls
 
