@@ -1,5 +1,5 @@
 docker-compose.md
-
+```
 # Use root/example as user/password credentials
 version: '3.1'
 
@@ -89,4 +89,4 @@ services:
       - PMA_PORT=3306 
     networks:
       db:
-
+```
