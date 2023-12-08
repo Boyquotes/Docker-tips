@@ -240,6 +240,16 @@ docker run --name myadmin -d -e PMA_PASSWORD_FILE=db_password.txt -p 8080:80 php
 ```
 
 
+View content of a stopped container
+```
+Commit the stopped container to a new image: test_image.
+docker commit $CONTAINER_ID test_image
+Run the new image in a new container with a shell.
+docker run -ti --entrypoint=sh test_image
+Run the list file command in the new container.
+docker exec --privileged $NEW_CONTAINER_ID ls -1 /var/log
+```
+
 
 
 ```
@@ -354,7 +364,9 @@ docker volume ls
 
 ```
 
-
+test -z "$(docker ps -q 2>/dev/null)" && osascript -e 'quit app "Docker"'
+docker ps -q | xargs -L1 docker stop
+docker ps -a | xargs -L1 docker rm
 
 ## PYTHON
 API :  
