@@ -155,7 +155,7 @@ $ docker build --target builder -t alexellis2/href-counter:latest .
 You can even use an external image as a stage, it is described in the same docs, so you can do something like this:
 
 COPY --from=nginx:latest /etc/nginx/nginx.conf /nginx.conf
-
+COPY --chown=node package*.json ./
 # syntax=docker/dockerfile:1
 FROM ubuntu AS base
 RUN echo "base"
@@ -363,6 +363,10 @@ docker run -it -d --init -p 3010:3000 -v "$(pwd):/home/project:cached" theia-blu
 docker volume ls
 
 ```
+
+COPY --chown=node package*.json ./
+COPY --chown=node . .
+docker logs -n 500 -f crypto-tracker-ctg-backend-1
 
 test -z "$(docker ps -q 2>/dev/null)" && osascript -e 'quit app "Docker"'
 docker ps -q | xargs -L1 docker stop
