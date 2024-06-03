@@ -6,6 +6,12 @@ docker run --privileged -d --name dind-test docker:dind
 docker exec -it dind-test /bin/sh
 ```
 
+```
+copy
+docker cp ydfs24-long-run:/home/linuxconsole2024/iso/linuxconsole.2024-05-13-x86_64.iso ./
+docker cp . dind-test:/home/ydfs/
+```
+
 ## Dockerfile
 ```
 ARG BASE_IMAGE_NAME=debian:bullseye-slim
