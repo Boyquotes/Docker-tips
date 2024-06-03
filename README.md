@@ -1,6 +1,11 @@
 user
 sudo chown -R $(id -u):$(id -g) $HOME/.docker
 
+```
+docker run --privileged -d --name dind-test docker:dind
+docker exec -it dind-test /bin/sh
+```
+
 ## Dockerfile
 ```
 ARG BASE_IMAGE_NAME=debian:bullseye-slim
