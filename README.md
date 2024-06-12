@@ -392,7 +392,19 @@ https://github.com/codefresh-contrib/python-flask-sample-app
 
 `docker run -it --rm quay.io/python-devs/ci-image:master`
 
+```
+  GNU nano 7.2                                                                                                   find_ports_docker.sh                                                                                                             
+#!/bin/bash
+result=`docker ps -a | grep -v Exited | grep -v Created | grep 0.0.0.0 | awk -F ':::' '{print $2}' | awk '{print $1}' | cut -d"-" -f1 > file`
 
+valeur_a_chercher=$1
+while IFS= read -r ligne; do
+    tableau_indi+=("$ligne")
+    if [[ "$ligne" == "$valeur_a_chercher" ]]; then
+        echo "trouver"
+    fi
+done < "file"
+```
 ## PHP
 composer install --no-cache --prefer-dist --no-dev --no-autoloader --no-scripts --no-progress
 
